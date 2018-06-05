@@ -17,9 +17,31 @@ def get_next_id(conn):
         nid = str(i[1])
     return nid
 
-def rebuild(conn):
+count = 1
+
+# this takes a start id, and start left which should be 1, 1 and then will be recursive
+def rebuild(gid, lft, cursor,conn):
+    global count
     # do the left and right values
-    return
+    rgt = lft + 1
+    sql = "select ncbi_id from taxonomy where parent_ncbi_id = "+str(gid)
+    cursor.execute(sql)
+    l = cursor.fetchall()
+    res = set()
+    for i in l:
+        if str(i[0]) != gid:
+            res.add(str(i[0]))
+    for i in res:
+        rgt = rebuild(i,rgt,cursor,conn)
+    updcmd = "update taxonomy set left_value = "+str(lft)+", right_value = "+str(rgt)+" where ncbi_id = "+str(gid)+";"
+    #pse(updcmd)
+    cursor.execute(updcmd)
+    if count % 100000 == 0:
+        pse(count)
+        #sys.exit(0)
+        conn.commit()
+    count += 1
+    return rgt + 1
 
 def create_necessary_table(conn):
     # first check to see if it exists
@@ -183,6 +205,9 @@ def main():
         rename(args.rename,conn)
     elif operation == 'I':
         info(args.info,conn)
+    elif operation == 'B':
+        cursor = conn.cursor()
+        rebuild(1,1,cursor,conn)
     pse("closing "+dbloc)
     conn.close()
     return
