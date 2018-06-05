@@ -1,11 +1,20 @@
 import sys
 import argparse as ap
 import sqlite3
+from time import strftime,gmtime
+
+# logfile and count that we will use globally
+logfile = None
+count = 1
 
 # convienience for printing to sys err
 def pse(toprint):
     print >> sys.stderr,toprint
 
+def log(toprint):
+    global logfile
+    stt = strftime("%a, %d %b %Y %H:%M:%S", gmtime())
+    logfile.write(stt+" || "+toprint+"\n")
 
 def get_next_id(conn):
     c = conn.cursor()
@@ -16,8 +25,6 @@ def get_next_id(conn):
     for i in l:
         nid = str(i[1])
     return nid
-
-count = 1
 
 # this takes a start id, and start left which should be 1, 1 and then will be recursive
 def rebuild(gid, lft, cursor,conn):
@@ -54,6 +61,7 @@ def create_necessary_table(conn):
         created = True
     # if not, create
     if created == False:
+        log("creating the phlawd_db_editor_newids table with start value 66600001")
         sql = "create table phlawd_db_editor_newids (id INTEGER PRIMARY KEY, ncbi_id INTEGER)"
         c.execute(sql)
         conn.commit()
@@ -73,13 +81,14 @@ def create(args,conn):
         nm = str(i[2])
         rk = str(i[4])
         pid = str(i[5])
-        pse("id,name,parent_id,rank")
-        pse(id+","+nm+","+pid+","+rk)
+        #pse("id,name,parent_id,rank")
+        #pse(id+","+nm+","+pid+","+rk)
     # just create the taxon name
     gnid = get_next_id(conn)
-    pse("adding "+args[0]+"("+gnid+") to be a child of "+args[1])    
+    pse("creating "+args[0]+"("+gnid+") to be a child of "+args[1])    
+    log("creating "+args[0]+"("+gnid+") to be a child of "+args[1])    
     sql = "insert into taxonomy (name,name_class,parent_ncbi_id,ncbi_id,edited_name) values ('"+args[0]+"','scientific name',"+str(args[1])+","+gnid+",'"+args[0]+"')"
-    pse(sql)
+    #pse(sql)
     c.execute(sql)
     x = c.lastrowid
     conn.commit()
@@ -95,8 +104,9 @@ def delete(args,conn):
     # do the taxon
     c = conn.cursor()
     pse("deleting "+str(args[0]))
+    log("deleting "+str(args[0]))
     sql = "delete from taxonomy where ncbi_id="+str(args[0])
-    pse(sql)
+    #pse(sql)
     c.execute(sql)
     conn.commit()
     return
@@ -104,8 +114,10 @@ def delete(args,conn):
 def move(args,conn):
     # do the name
     c = conn.cursor()
+    pse("moving "+str(args[0])+" to be a child of "+str(args[1]))
+    log("moving "+str(args[0])+" to be a child of "+str(args[1]))
     sql = "update taxonomy set parent_ncbi_id = "+str(args[1])+" where ncbi_id = "+str(args[0])
-    pse(sql)
+    #pse(sql)
     c.execute(sql)
     conn.commit()
     return
@@ -113,8 +125,10 @@ def move(args,conn):
 def rename(args,conn):
     # do the name
     c = conn.cursor()
+    pse("renaming "+str(args[0])+" to be "+str(args[1]))
+    log("renaming "+str(args[0])+" to be "+str(args[1]))
     sql = "update taxonomy set name = '"+str(args[1])+"', edited_name = '"+str(args[1])+"' where ncbi_id = "+str(args[0])
-    pse(sql)
+    #pse(sql)
     c.execute(sql)
     conn.commit()
     return
@@ -160,13 +174,18 @@ def generate_argparser():
         help=("Get information about an id or taxon."),metavar=("ID/NAME"))
     parser.add_argument("--rebuild",action="store_true",help=("Once you are all done,\
         you need to do this so that the left and right values are correct."))
+    parser.add_argument("-l","--logfile",nargs=1,type=str,default="phlawd_db_editor.log",
+        help=("Logfile for storing all commands and results."))
     return parser
 
 def main():
+    global logfile
     parser = generate_argparser()
     if len(sys.argv[1:]) == 0:
         sys.argv.append("-h")
     args = parser.parse_args(sys.argv[1:])
+    pse("opening logfile "+args.logfile)
+    logfile = open(args.logfile,"a")
     operation = None # will be C, D, M, R, I,B
     operations = 0
     if args.create:
@@ -206,10 +225,13 @@ def main():
     elif operation == 'I':
         info(args.info,conn)
     elif operation == 'B':
+        log("rebuilding left and right values")
+        pse("rebuilding left and right values")
         cursor = conn.cursor()
         rebuild(1,1,cursor,conn)
     pse("closing "+dbloc)
     conn.close()
+    logfile.close()
     return
 
 if __name__ == "__main__":
