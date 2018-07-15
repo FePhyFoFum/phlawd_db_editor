@@ -87,7 +87,7 @@ def create(args,conn):
     gnid = get_next_id(conn)
     pse("creating "+args[0]+"("+gnid+") to be a child of "+args[1])    
     log("creating "+args[0]+"("+gnid+") to be a child of "+args[1])    
-    sql = "insert into taxonomy (name,name_class,parent_ncbi_id,ncbi_id,edited_name) values ('"+args[0]+"','scientific name',"+str(args[1])+","+gnid+",'"+args[0]+"')"
+    sql = "insert into taxonomy (name,name_class,parent_ncbi_id,ncbi_id,edited_name,node_rank) values ('"+args[0]+"','scientific name',"+str(args[1])+","+gnid+",'"+args[0]+"','')"
     #pse(sql)
     c.execute(sql)
     x = c.lastrowid
