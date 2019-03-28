@@ -2,6 +2,9 @@ import sys
 import argparse as ap
 import sqlite3
 from time import strftime,gmtime
+import datetime
+
+import seq
 
 # logfile and count that we will use globally
 logfile = None
@@ -100,6 +103,25 @@ def create(args,conn):
     pse(x)
     return
 
+def addseqs(args,conn):
+    pse("opening "+args[0]+" to add sequences")
+    log("opening "+args[0]+" to add sequences")
+    c = conn.cursor()
+    count = 0
+    for i in seq.read_fasta_file_iter(args[0]):
+        spls = i.name.split("@")
+        ncbiid = spls[0]
+        seqid = spls[1]
+        pse("adding "+seqid+" ("+ncbiid+") ")
+        log("adding "+seqid+" ("+ncbiid+") ")
+        sql = "insert into sequence (ncbi_id,accession_id,locus,version_id,title,description,seq) values ('"+ncbiid+"','"+seqid+"','"+seqid+"','"+seqid+".1', 'sequence added on "+str(datetime.datetime.now())+"','sequence added on "+str(datetime.datetime.now())+"','"+i.seq+"')"
+        c.execute(sql)
+        conn.commit()
+        count += 1
+    pse("added "+str(count)+" new sequences")
+    log("added "+str(count)+" new sequences")
+    return
+
 def delete(args,conn):
     # do the taxon
     c = conn.cursor()
@@ -172,6 +194,8 @@ def generate_argparser():
         help=("Location of database. MAKE A COPY BEFORE EDITING!"))
     parser.add_argument("-i","--info",type=str,nargs=1,required=False,
         help=("Get information about an id or taxon."),metavar=("ID/NAME"))
+    parser.add_argument("-a","--addseqs",type=str,nargs=1,required=False,
+        help=("Add sequences from fasta file to existing taxa where fasta labels are >NCBITAXONIN@SEQID"))
     parser.add_argument("--rebuild",action="store_true",help=("Once you are all done,\
         you need to do this so that the left and right values are correct."))
     parser.add_argument("-l","--logfile",nargs=1,type=str,default="phlawd_db_editor.log",
@@ -186,10 +210,13 @@ def main():
     args = parser.parse_args(sys.argv[1:])
     pse("opening logfile "+args.logfile)
     logfile = open(args.logfile,"a")
-    operation = None # will be C, D, M, R, I,B
+    operation = None # will be C, D, M, R, I,B, A
     operations = 0
     if args.create:
         operation = 'C'
+        operations += 1
+    if args.addseqs:
+        operation = 'A'
         operations += 1
     if args.delete:
         operation = 'D'
@@ -224,6 +251,8 @@ def main():
         rename(args.rename,conn)
     elif operation == 'I':
         info(args.info,conn)
+    elif operation == 'A':
+        addseqs(args.addseqs,conn)
     elif operation == 'B':
         log("rebuilding left and right values")
         pse("rebuilding left and right values")
