@@ -88,10 +88,10 @@ def create(args,conn):
         #pse(id+","+nm+","+pid+","+rk)
     # just create the taxon name
     gnid = get_next_id(conn)
-    pse("creating "+args[0]+"("+gnid+") to be a child of "+args[1])    
-    log("creating "+args[0]+"("+gnid+") to be a child of "+args[1])    
-    sql = "insert into taxonomy (name,name_class,parent_ncbi_id,ncbi_id,edited_name,node_rank) values ('"+args[0]+"','scientific name',"+str(args[1])+","+gnid+",'"+args[0]+"','')"
-    #pse(sql)
+    pse("creating "+args[0]+"("+gnid+") to be a child of "+args[1])
+    log("creating "+args[0]+"("+gnid+") to be a child of "+args[1])
+    sql = "insert into taxonomy (name,name_class,parent_ncbi_id,ncbi_id,edited_name,node_rank) values ('"+args[0]+"','scientific name',"+str(args[1])+","+gnid+",'"+args[0]+"','"+str(args[2])+"')"
+    pse(sql)
     c.execute(sql)
     x = c.lastrowid
     conn.commit()
@@ -179,8 +179,8 @@ def info(args,conn):
 def generate_argparser():
     parser = ap.ArgumentParser(prog="phlawd_db_editor.py",
         formatter_class=ap.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("-c","--create",type=str,nargs=2,required=False,
-        help=("Create a taxon (requires PARENTID and NEWID)."),metavar=("NAME","PARENTID"))
+    parser.add_argument("-c","--create",type=str,nargs=3,required=False,
+        help=("Create a taxon (requires NEWNAME, PARENTID, and RANK)."),metavar=("NAME","PARENTID", "RANK"))
     parser.add_argument("-d","--delete",type=int,nargs=1,required=False,
         help=("Delete an id. If there are subtending taxa, it will break and \
             you will need to use -f option along with -d"),metavar=("ID"))
@@ -210,7 +210,7 @@ def main():
     args = parser.parse_args(sys.argv[1:])
     pse("opening logfile "+args.logfile)
     logfile = open(args.logfile,"a")
-    operation = None # will be C, D, M, R, I,B, A
+    operation = None # will be C, D, M, R, I, B, A
     operations = 0
     if args.create:
         operation = 'C'
