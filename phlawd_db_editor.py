@@ -122,14 +122,44 @@ def addseqs(args,conn):
     log("added "+str(count)+" new sequences")
     return
 
+def get_all_subtending_ids(inid,conn):
+    c = conn.cursor()
+    sql = "select left_value,right_value from taxonomy where name_class = 'scientific name' and ncbi_id ="+str(inid)
+    c.execute(sql)
+    l = c.fetchall()
+    lf = ""
+    rt = ""
+    for i in l:
+        lf = str(i[0])
+        rt = str(i[1])
+    ids = []
+    if lf != "" and rt != "":
+        sql = "select ncbi_id from taxonomy where left_value >= "+lf+" and right_value <= "+rt
+        c.execute(sql)
+        l = c.fetchall()
+        for i in l:
+            ids.append(str(i[0]))
+    return ids
+
 def delete(args,conn):
     # do the taxon
     c = conn.cursor()
-    pse("deleting "+str(args[0]))
-    log("deleting "+str(args[0]))
-    sql = "delete from taxonomy where ncbi_id="+str(args[0])
-    #pse(sql)
-    c.execute(sql)
+    # get all the subtending ids
+    ids = get_all_subtending_ids(args[0],conn)
+    # do the seqs
+    pse("deleting seqs associated with "+str(args[0]) +" (recursively)")
+    log("deleting seqs associated with "+str(args[0]) +" (recursively)")
+    for i in ids:
+        sql = "delete from sequence where ncbi_id = "+str(i)
+        c.execute(sql)
+    pse("deleting "+str(args[0]) +" (recursively)")
+    log("deleting "+str(args[0]) +" (recursively)")
+    for i in ids:
+        sql = "delete from taxonomy where ncbi_id = "+str(i)
+        c.execute(sql)
+    pse("vacuuming")
+    log("vacuuming")
+    c.execute("vacuum")
     conn.commit()
     return
 
