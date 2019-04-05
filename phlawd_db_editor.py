@@ -12,7 +12,7 @@ count = 1
 
 # convienience for printing to sys err
 def pse(toprint):
-    print >> sys.stderr,toprint
+    print(toprint, file=sys.stderr)
 
 def log(toprint):
     global logfile
