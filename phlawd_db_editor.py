@@ -159,8 +159,8 @@ def delete(args,conn):
         c.execute(sql)
     pse("vacuuming")
     log("vacuuming")
-    c.execute("vacuum")
     conn.commit()
+    c.execute("vacuum")
     return
 
 def move(args,conn):
