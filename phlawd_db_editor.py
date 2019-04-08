@@ -88,20 +88,32 @@ def create(args,conn):
     c = conn.cursor()
     # get the parent first
     pse("getting the parent "+args[1])
-    c.execute("select * from taxonomy where ncbi_id = ? and name_class = 'scientific name'",(args[1],))
+    idin = True
+    try:
+        int(args[1])
+    except:
+        idin = False
+    
+    pid = ""
+    if idin == True:
+        pid = args[1]
+    else:
+        pid = get_id_from_name(args[1],conn)
+        pid = str(pid)
+    c.execute("select * from taxonomy where ncbi_id = ? and name_class = 'scientific name'",(pid,))
     l = c.fetchall()
     for i in l:
         id = str(i[1])
         nm = str(i[2])
         rk = str(i[4])
-        pid = str(i[5])
+        #pid = str(i[5])
         #pse("id,name,parent_id,rank")
         #pse(id+","+nm+","+pid+","+rk)
     # just create the taxon name
     gnid = get_next_id(conn)
-    pse("creating "+args[0]+"("+gnid+") to be a child of "+args[1])
-    log("creating "+args[0]+"("+gnid+") to be a child of "+args[1])
-    sql = "insert into taxonomy (name,name_class,parent_ncbi_id,ncbi_id,edited_name,node_rank) values ('"+args[0]+"','scientific name',"+str(args[1])+","+gnid+",'"+args[0]+"','"+str(args[2])+"')"
+    pse("creating "+args[0]+"("+gnid+") to be a child of "+pid)
+    log("creating "+args[0]+"("+gnid+") to be a child of "+pid)
+    sql = "insert into taxonomy (name,name_class,parent_ncbi_id,ncbi_id,edited_name,node_rank) values ('"+args[0]+"','scientific name',"+pid+","+gnid+",'"+args[0]+"','"+str(args[2])+"')"
     pse(sql)
     c.execute(sql)
     x = c.lastrowid
@@ -162,7 +174,7 @@ def delete(args,conn):
     c = conn.cursor()
     ids = list()
     # get all the subtending ids
-    if idin:
+    if idin == True:
         ids = get_all_subtending_ids(args[0],conn)
     else:
         tid = get_id_from_name(args[0],conn)
