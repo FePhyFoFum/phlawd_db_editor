@@ -14,6 +14,17 @@ count = 1
 def pse(toprint):
     print(toprint, file=sys.stderr)
 
+# names are not as safe (i.e. necessarily unique), but convenient
+def get_id_from_name(inname,conn):
+    c = conn.cursor()
+    c.execute("select * from taxonomy where name like '"+inname+"' and name_class = 'scientific name'",)
+    l = c.fetchall()
+    if (len(l) > 1):
+        print("Error: name provided has multiple hits.")
+        sys.exit(0)
+    else:
+        return [x[1] for x in l][0]
+
 def log(toprint):
     global logfile
     stt = strftime("%a, %d %b %Y %H:%M:%S", gmtime())
@@ -143,9 +154,19 @@ def get_all_subtending_ids(inid,conn):
 
 def delete(args,conn):
     # do the taxon
+    idin = True
+    try:
+        int(args[0])
+    except:
+        idin = False
     c = conn.cursor()
+    ids = list()
     # get all the subtending ids
-    ids = get_all_subtending_ids(args[0],conn)
+    if idin:
+        ids = get_all_subtending_ids(args[0],conn)
+    else:
+        tid = get_id_from_name(args[0],conn)
+        ids = get_all_subtending_ids(tid,conn)
     # do the seqs
     pse("deleting seqs associated with "+str(args[0]) +" (recursively)")
     log("deleting seqs associated with "+str(args[0]) +" (recursively)")
@@ -165,10 +186,21 @@ def delete(args,conn):
 
 def move(args,conn):
     # do the name
+    idin = True
+    try:
+        int(args[0])
+    except:
+        idin = False
     c = conn.cursor()
     pse("moving "+str(args[0])+" to be a child of "+str(args[1]))
     log("moving "+str(args[0])+" to be a child of "+str(args[1]))
-    sql = "update taxonomy set parent_ncbi_id = "+str(args[1])+" where ncbi_id = "+str(args[0])
+    sql = ""
+    if idin == True:
+        sql = "update taxonomy set parent_ncbi_id = "+str(args[1])+" where ncbi_id = "+str(args[0])
+    else:
+        tid = get_id_from_name(args[0],conn)
+        pid = get_id_from_name(args[1],conn)
+        sql = "update taxonomy set parent_ncbi_id = "+str(pid)+" where ncbi_id = "+str(tid)
     #pse(sql)
     c.execute(sql)
     conn.commit()
@@ -176,10 +208,20 @@ def move(args,conn):
 
 def rename(args,conn):
     # do the name
+    idin = True
+    try:
+        int(args[0])
+    except:
+        idin = False
     c = conn.cursor()
     pse("renaming "+str(args[0])+" to be "+str(args[1]))
     log("renaming "+str(args[0])+" to be "+str(args[1]))
-    sql = "update taxonomy set name = '"+str(args[1])+"', edited_name = '"+str(args[1])+"' where ncbi_id = "+str(args[0])
+    sql = ""
+    if idin == True:
+        sql = "update taxonomy set name = '"+str(args[1])+"', edited_name = '"+str(args[1])+"' where ncbi_id = "+str(args[0])
+    else:
+        tid = get_id_from_name(args[0],conn)
+        sql = "update taxonomy set name = '"+str(args[1])+"', edited_name = '"+str(args[1])+"' where ncbi_id = "+str(tid)
     #pse(sql)
     c.execute(sql)
     conn.commit()
@@ -195,7 +237,8 @@ def info(args,conn):
     if idin == True:
         c.execute("select * from taxonomy where ncbi_id = ? and name_class = 'scientific name'",(args[0],))
     else:
-        c.execute("select * from taxonomy where name like '"+args[0]+"' and name_class = 'scientific name'",)
+        tid = get_id_from_name(args[0],conn)
+        c.execute("select * from taxonomy where ncbi_id = ? and name_class = 'scientific name'", (tid,))
     l = c.fetchall()
     for i in l:
         id = str(i[1])
@@ -211,13 +254,13 @@ def generate_argparser():
         formatter_class=ap.ArgumentDefaultsHelpFormatter)
     parser.add_argument("-c","--create",type=str,nargs=3,required=False,
         help=("Create a taxon (requires NEWNAME, PARENTID, and RANK)."),metavar=("NAME","PARENTID", "RANK"))
-    parser.add_argument("-d","--delete",type=int,nargs=1,required=False,
+    parser.add_argument("-d","--delete",type=str,nargs=1,required=False,
         help=("Delete an id. If there are subtending taxa, it will break and \
             you will need to use -f option along with -d"),metavar=("ID"))
-    parser.add_argument("-m","--move",type=int,nargs=2,required=False,
-        help=("Move ncbi id1 to be a child of id2 like -m id1 id2"),metavar=("ID1","ID2"))
+    parser.add_argument("-m","--move",type=str,nargs=2,required=False,
+        help=("Move ncbi id1 to be a child of id2 like -m id1 id2. Can also do with names."),metavar=("ID1","ID2"))
     parser.add_argument("-r","--rename",type=str,nargs=2,required=False,
-        help=("Rename id to name like -r id name."),metavar=("ID","NAME"))
+        help=("Rename taxon to name like -r id name (or -r old_name name)."),metavar=("ID","NAME"))
     parser.add_argument("-f","--force",action='store_true',default=False,required=False,
         help=("Force. This can be used with -d to delete despite subtending taxa."))
     parser.add_argument("-b","--database",type=str,nargs=1,required=True,
