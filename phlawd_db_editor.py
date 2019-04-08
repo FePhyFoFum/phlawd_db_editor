@@ -22,6 +22,9 @@ def get_id_from_name(inname,conn):
     if (len(l) > 1):
         print("Error: name provided has multiple hits.")
         sys.exit(0)
+    elif (len(l) == 0):
+        print("Error: name not found.")
+        sys.exit(0)
     else:
         return [x[1] for x in l][0]
 
