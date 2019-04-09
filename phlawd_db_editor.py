@@ -23,8 +23,7 @@ def get_id_from_name(inname,conn):
         print("Error: name provided has multiple hits.")
         sys.exit(0)
     elif (len(l) == 0):
-        print("Error: name not found.")
-        sys.exit(0)
+        return None
     else:
         return [x[1] for x in l][0]
 
@@ -102,6 +101,9 @@ def create(args,conn):
         pid = args[1]
     else:
         pid = get_id_from_name(args[1],conn)
+        if pid is None:
+            print("Error: name not found.")
+            sys.exit(0)
         pid = str(pid)
     c.execute("select * from taxonomy where ncbi_id = ? and name_class = 'scientific name'",(pid,))
     l = c.fetchall()
@@ -181,6 +183,9 @@ def delete(args,conn):
         ids = get_all_subtending_ids(args[0],conn)
     else:
         tid = get_id_from_name(args[0],conn)
+        if tid is None:
+            print("Error: name not found.")
+            sys.exit(0)
         ids = get_all_subtending_ids(tid,conn)
     # do the seqs
     pse("deleting seqs associated with "+str(args[0]) +" (recursively)")
@@ -215,6 +220,9 @@ def move(args,conn):
     
     if idin == False:
         tid = get_id_from_name(args[0],conn)
+        if tid is None:
+            print("Error: taxon name not found.")
+            sys.exit(0)
     else:
         tid = args[0]
     
@@ -227,6 +235,9 @@ def move(args,conn):
     
     if idin == False:
         pid = get_id_from_name(args[1],conn)
+        if pid is None:
+            print("Error: parent name not found.")
+            sys.exit(0)
     else:
         pid = args[1]
     
@@ -255,6 +266,9 @@ def rename(args,conn):
         sql = "update taxonomy set name = '"+str(args[1])+"', edited_name = '"+str(args[1])+"' where ncbi_id = "+str(args[0])
     else:
         tid = get_id_from_name(args[0],conn)
+        if tid is None:
+            print("Error: name not found.")
+            sys.exit(0)
         sql = "update taxonomy set name = '"+str(args[1])+"', edited_name = '"+str(args[1])+"' where ncbi_id = "+str(tid)
     #pse(sql)
     c.execute(sql)
@@ -272,6 +286,9 @@ def info(args,conn):
         c.execute("select * from taxonomy where ncbi_id = ? and name_class = 'scientific name'",(args[0],))
     else:
         tid = get_id_from_name(args[0],conn)
+        if tid is None:
+            print("Error: name not found.")
+            sys.exit(0)
         c.execute("select * from taxonomy where ncbi_id = ? and name_class = 'scientific name'", (tid,))
     l = c.fetchall()
     for i in l:
