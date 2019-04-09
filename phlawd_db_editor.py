@@ -199,23 +199,42 @@ def delete(args,conn):
     c.execute("vacuum")
     return
 
+# check both args are ints, fetch ids if not
 def move(args,conn):
     # do the name
+    tid = 0
+    pid = 0
+    c = conn.cursor()
     idin = True
+    
+    # taxon that is moving
     try:
         int(args[0])
     except:
         idin = False
-    c = conn.cursor()
+    
+    if idin == False:
+        tid = get_id_from_name(args[0],conn)
+    else:
+        tid = args[0]
+    
+    # now, parent taxon
+    idin = True
+    try:
+        int(args[1])
+    except:
+        idin = False
+    
+    if idin == False:
+        pid = get_id_from_name(args[1],conn)
+    else:
+        pid = args[1]
+    
+    sql = "update taxonomy set parent_ncbi_id = "+str(pid)+" where ncbi_id = "+str(tid)
+    
     pse("moving "+str(args[0])+" to be a child of "+str(args[1]))
     log("moving "+str(args[0])+" to be a child of "+str(args[1]))
-    sql = ""
-    if idin == True:
-        sql = "update taxonomy set parent_ncbi_id = "+str(args[1])+" where ncbi_id = "+str(args[0])
-    else:
-        tid = get_id_from_name(args[0],conn)
-        pid = get_id_from_name(args[1],conn)
-        sql = "update taxonomy set parent_ncbi_id = "+str(pid)+" where ncbi_id = "+str(tid)
+    
     #pse(sql)
     c.execute(sql)
     conn.commit()
