@@ -275,7 +275,7 @@ def generate_argparser():
     parser.add_argument("-m","--move",type=str,nargs=2,required=False,
         help=("Move ncbi id1 to be a child of id2 like -m id1 id2. Can also do with names."),metavar=("ID1","ID2"))
     parser.add_argument("-r","--rename",type=str,nargs=2,required=False,
-        help=("Rename taxon to name like -r id name (or -r old_name name)."),metavar=("ID","NAME"))
+        help=("Rename taxon to name like -r id name (or -r old_name new_name)."),metavar=("ID","NAME"))
     parser.add_argument("-f","--force",action='store_true',default=False,required=False,
         help=("Force. This can be used with -d to delete despite subtending taxa."))
     parser.add_argument("-b","--database",type=str,nargs=1,required=True,
