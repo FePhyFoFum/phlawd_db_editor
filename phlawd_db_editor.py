@@ -105,6 +105,13 @@ def create(args,conn):
             print("Error: name not found.")
             sys.exit(0)
         pid = str(pid)
+    
+    # check if a taxon with the proposed name already exists
+    tid = get_id_from_name(args[0],conn)
+    if tid is not None:
+        print("Error: a taxon with that name already appears in the DB.")
+        sys.exit(0)
+    
     c.execute("select * from taxonomy where ncbi_id = ? and name_class = 'scientific name'",(pid,))
     l = c.fetchall()
     for i in l:
