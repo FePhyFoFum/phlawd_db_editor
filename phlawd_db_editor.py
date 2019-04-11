@@ -298,6 +298,9 @@ def info(args,conn):
             sys.exit(0)
         c.execute("select * from taxonomy where ncbi_id = ? and name_class = 'scientific name'", (tid,))
     l = c.fetchall()
+    if len(l) == 0:
+        print("Error: id not found.")
+        sys.exit(0)
     for i in l:
         id = str(i[1])
         nm = str(i[2])
