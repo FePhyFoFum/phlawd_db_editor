@@ -303,8 +303,8 @@ def info(args,conn):
         nm = str(i[2])
         rk = str(i[4])
         pid = str(i[5])
-        pse("id,name,parent_id,rank")
-        pse(id+","+nm+","+pid+","+rk)
+        pse("id,name,rank,parent_id")
+        pse(id+","+nm+","+rk+","+pid)
 
 
 def generate_argparser():
