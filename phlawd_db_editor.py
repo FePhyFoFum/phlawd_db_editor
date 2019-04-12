@@ -301,13 +301,23 @@ def info(args,conn):
     if len(l) == 0:
         print("Error: id not found.")
         sys.exit(0)
+    id = ""
+    nm = ""
+    rk = ""
+    pnm = "" # adding in parent name bc i want it
+    pid = ""
     for i in l:
         id = str(i[1])
         nm = str(i[2])
         rk = str(i[4])
         pid = str(i[5])
-        pse("id,name,rank,parent_id")
-        pse(id+","+nm+","+rk+","+pid)
+    # extra bit to get parent name
+    c.execute("select * from taxonomy where ncbi_id = ? and name_class = 'scientific name'", (pid,))
+    l = c.fetchall()
+    for i in l:
+        pnm = str(i[2])
+    pse("id,name,rank,parent_name,parent_id")
+    pse(id+","+nm+","+rk+","+pnm+","+pid)
 
 
 def generate_argparser():
