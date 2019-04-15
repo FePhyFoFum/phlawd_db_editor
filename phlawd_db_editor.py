@@ -103,6 +103,9 @@ def create(args,conn):
     pse(x)
     return
 
+# expectation is that sequence id format is 
+# >96720@Donnellan_Mabuya_longicaudata Mabuya longicaudata
+# taxonid@ uniq species genus
 def addseqs(args,conn):
     pse("opening "+args[0]+" to add sequences")
     log("opening "+args[0]+" to add sequences")
@@ -111,10 +114,12 @@ def addseqs(args,conn):
     for i in seq.read_fasta_file_iter(args[0]):
         spls = i.name.split("@")
         ncbiid = spls[0]
-        seqid = spls[1]
-        pse("adding "+seqid+" ("+ncbiid+") ")
-        log("adding "+seqid+" ("+ncbiid+") ")
-        sql = "insert into sequence (ncbi_id,accession_id,locus,version_id,title,description,seq) values ('"+ncbiid+"','"+seqid+"','"+seqid+"','"+seqid+".1', 'sequence added on "+str(datetime.datetime.now())+"','sequence added on "+str(datetime.datetime.now())+"','"+i.seq+"')"
+        onesplit = spls[1].split(" ")
+        seqid = onesplit[0]
+        descr = " ".join(onesplit[1:])
+        pse("adding "+seqid+" ("+ncbiid+") "+"(descr: "+descr+" sequence added on "+str(datetime.datetime.now())+")")
+        log("adding "+seqid+" ("+ncbiid+") "+"(descr: "+descr+" sequence added on "+str(datetime.datetime.now())+")")
+        sql = "insert into sequence (ncbi_id,accession_id,locus,version_id,title,description,seq) values ('"+ncbiid+"','"+seqid+"','"+seqid+"','"+seqid+".1', '"+descr+" sequence added on "+str(datetime.datetime.now())+"','"+descr+" sequence added on "+str(datetime.datetime.now())+"','"+i.seq+"')"
         c.execute(sql)
         conn.commit()
         count += 1
