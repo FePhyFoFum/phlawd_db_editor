@@ -5,9 +5,9 @@ This houses some basic commands for making edits to the taxonomy in [phlawd_db_m
 The basic commands are
 
 - info   : `-i NCBIID or NAME`
-- create : `-c NAME PARENTNCBIID`
+- create : `-c NAME PARENTNCBIID RANK`
 - delete : `-d NCBIID`
-- move   : `-m NCBIID PARENTNCBIID`
+- move   : `-m NCBIID PARENTNCBIID RANK`
 - rename : `-r NCBIID NEWNAME`
 
 Only do one at a time and be careful! Each edit will be stored in a logfile (which you can set with `-l` or it defaults to `phlawd_db_editor.log`).
