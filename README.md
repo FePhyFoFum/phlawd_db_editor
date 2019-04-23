@@ -10,7 +10,7 @@ The basic commands are
 - move   : `-m NCBIID PARENTNCBIID RANK`
 - rename : `-r NCBIID NEWNAME`
 
-Only do one at a time and be careful! Each edit will be stored in a logfile (which you can set with `-l` or it defaults to `phlawd_db_editor.log`).
+Only do one at a time and be careful! Delete and move edits can also take names as arguments, although this only works if names are unique (this is checked). Each edit will be stored in a logfile (which you can set with `-l` or it defaults to `phlawd_db_editor.log`).
 
 Once you have completed your edits, you will need to `--rebuild`. 
 
