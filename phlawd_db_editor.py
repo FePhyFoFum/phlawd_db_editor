@@ -261,6 +261,15 @@ def move(args,conn):
     #pse(sql)
     c.execute(sql)
     conn.commit()
+    
+    rank = args[2]
+    sql = "update taxonomy set node_rank = '"+str(rank)+"' where ncbi_id = '"+str(tid)+"'"
+    pse("setting "+str(args[0])+" rank to "+str(args[2]))
+    log("setting "+str(args[0])+" rank to "+str(args[2]))
+    
+    #pse(sql)
+    c.execute(sql)
+    conn.commit()
     return
 
 def rename(args,conn):
@@ -333,8 +342,8 @@ def generate_argparser():
     parser.add_argument("-d","--delete",type=str,nargs=1,required=False,
         help=("Delete an id. If there are subtending taxa, it will break and \
             you will need to use -f option along with -d"),metavar=("ID"))
-    parser.add_argument("-m","--move",type=str,nargs=2,required=False,
-        help=("Move ncbi id1 to be a child of id2 like -m id1 id2. Can also do with names."),metavar=("ID1","ID2"))
+    parser.add_argument("-m","--move",type=str,nargs=3,required=False,
+        help=("Move ncbi id1 to be a child of id2 like -m id1 id2 rank. Can also do with names."),metavar=("ID1","ID2", "RANK"))
     parser.add_argument("-r","--rename",type=str,nargs=2,required=False,
         help=("Rename taxon to name like -r id name (or -r old_name new_name)."),metavar=("ID","NAME"))
     parser.add_argument("-f","--force",action='store_true',default=False,required=False,
