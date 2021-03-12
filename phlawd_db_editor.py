@@ -95,7 +95,6 @@ def create(args,conn):
         int(args[1])
     except:
         idin = False
-    
     pid = ""
     if idin == True:
         pid = args[1]
@@ -162,6 +161,7 @@ def addseqs(args,conn):
     log("added "+str(count)+" new sequences")
     return
 
+# assume inid is checked upstream
 def get_all_subtending_ids(inid,conn):
     c = conn.cursor()
     sql = "select left_value,right_value from taxonomy where name_class = 'scientific name' and ncbi_id ="+str(inid)
@@ -184,6 +184,7 @@ def get_all_subtending_ids(inid,conn):
 def delete(args,conn):
     # do the taxon
     idin = True
+    tid = 0
     try:
         int(args[0])
     except:
@@ -192,13 +193,14 @@ def delete(args,conn):
     ids = list()
     # get all the subtending ids
     if idin == True:
-        ids = get_all_subtending_ids(args[0],conn)
+        tid = args[0]
+        check_id_exists(tid,conn)
     else:
         tid = get_id_from_name(args[0],conn)
         if tid is None:
             print("Error: name not found.")
             sys.exit(0)
-        ids = get_all_subtending_ids(tid,conn)
+    ids = get_all_subtending_ids(tid,conn)
     # do the seqs
     pse("deleting seqs associated with "+str(args[0]) +" (recursively)")
     log("deleting seqs associated with "+str(args[0]) +" (recursively)")
@@ -284,6 +286,7 @@ def check_id_exists(tid,conn):
 def rename(args,conn):
     # do the name
     idin = True
+    tid = 0
     try:
         int(args[0])
     except:
@@ -293,13 +296,14 @@ def rename(args,conn):
     log("renaming "+str(args[0])+" to be "+str(args[1]))
     sql = ""
     if idin == True:
-        sql = "update taxonomy set name = '"+str(args[1])+"', edited_name = '"+str(args[1])+"' where ncbi_id = "+str(args[0])
+        tid = args[0]
+        check_id_exists(tid,conn)
     else:
         tid = get_id_from_name(args[0],conn)
         if tid is None:
             print("Error: name not found.")
             sys.exit(0)
-        sql = "update taxonomy set name = '"+str(args[1])+"', edited_name = '"+str(args[1])+"' where ncbi_id = "+str(tid)
+    sql = "update taxonomy set name = '"+str(args[1])+"', edited_name = '"+str(args[1])+"' where ncbi_id = "+str(tid)
     #pse(sql)
     c.execute(sql)
     conn.commit()
