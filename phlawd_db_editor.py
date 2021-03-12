@@ -272,6 +272,15 @@ def move(args,conn):
     conn.commit()
     return
 
+def check_id_exists(tid,conn):
+    c = conn.cursor()
+    # test command
+    c.execute("select * from taxonomy where ncbi_id = ? and name_class = 'scientific name'", (tid,))
+    l = c.fetchall()
+    if len(l) == 0:
+        print("Error: id not found.")
+        sys.exit(0)
+
 def rename(args,conn):
     # do the name
     idin = True
@@ -298,19 +307,21 @@ def rename(args,conn):
 
 def info(args,conn):
     idin = True
+    tid = 0
     try:
         int(args[0])
     except:
         idin = False
     c = conn.cursor()
     if idin == True:
-        c.execute("select * from taxonomy where ncbi_id = ? and name_class = 'scientific name'",(args[0],))
+        tid = args[0]
+        check_id_exists(tid,conn)
     else:
         tid = get_id_from_name(args[0],conn)
         if tid is None:
             print("Error: name not found.")
             sys.exit(0)
-        c.execute("select * from taxonomy where ncbi_id = ? and name_class = 'scientific name'", (tid,))
+    c.execute("select * from taxonomy where ncbi_id = ? and name_class = 'scientific name'", (tid,))
     l = c.fetchall()
     if len(l) == 0:
         print("Error: id not found.")
